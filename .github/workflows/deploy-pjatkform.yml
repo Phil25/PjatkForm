@@ -1,0 +1,22 @@
+name: Deploy PjatkForm
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v1
+
+      - name: Copy files over SSH
+        uses: appleboy/scp-action@master
+        with:
+          host: pjatkollab.com
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
+          source: "*,!.git*"
+          target: "/var/www/html/drupal/modules/custom/PjatkForm"
