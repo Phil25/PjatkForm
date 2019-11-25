@@ -7,6 +7,46 @@ use Drupal\Core\Form\FormStateInterface;
 
 use Drupal\PjatkForm\NTLMSoapClient\NTLMSoapClient;
 
+use Drupal\user\Entity\User;
+
+function randomString($length = 64) {
+	$characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+	$charactersLength = strlen($characters);
+	$randomString = '';
+	for ($i = 0; $i < $length; $i++) {
+		$randomString .= $characters[rand(0, $charactersLength - 1)];
+	}
+	return $randomString;
+}
+
+function getSoapClient($username, $password) {
+	$client = new NTLMSoapClient('https://ws.pjwstk.edu.pl/test/Service.svc?wsdl', array(
+		'ntlm_username' => $username,
+		'ntlm_password' => $password,
+	));
+
+	try {
+		$client->tester();
+		return $client;
+	} catch(\Exception $e) {
+		return NULL;
+	}
+}
+
+function createUser($number, $client) {
+	$user = User::create();
+
+	$user->setPassword(randomString());
+	$user->enforceIsNew();
+	$user->setEmail($number . '@pjwstk.edu.pl');
+	$user->setUsername($number);
+
+	$user->activate();
+	$user->save();
+
+	return $user;
+}
+
 class PjatkForm extends FormBase {
 
 	/**
@@ -43,16 +83,18 @@ class PjatkForm extends FormBase {
 	 * {@inheritdoc}
 	 */
 	public function submitForm(array &$form, FormStateInterface $form_state) {
-		$client = new NTLMSoapClient('https://ws.pjwstk.edu.pl/test/Service.svc?wsdl', array(
-			'ntlm_username' => $form_state->getValue('number'),
-			'ntlm_password' => $form_state->getValue('password'),
-		));
+		$number = $form_state->getValue('number');
+		$client = getSoapClient($number, $form_state->getValue('password'));
 
-		try {
-			$result = $client->GetStudentPersonalDataSimple();
-			drupal_set_message('Response: ' . print_r($result, true));
-		} catch(\Exception $e) {
-			drupal_set_message(t('Login failed: ' . $e->getMessage()), 'error');
+		if(!$client) {
+			drupal_set_message(t('Invalid student number or password.'), 'error');
+			return;
 		}
+
+		$user = User::load($number);
+		if(!$user) $user = createUser($number, $client);
+
+		drupal_set_message(t('Logged in'));
+		user_login_finalize($user);
 	}
 }
