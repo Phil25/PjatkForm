@@ -1,0 +1,7 @@
+PjatkForm.PjatkForm:
+  path: '/user/login/test'
+  defaults:
+    _form: '\Drupal\PjatkForm\Form\PjatkForm'
+    _title: 'Log in'
+  requirements:
+    _permission: 'access content'

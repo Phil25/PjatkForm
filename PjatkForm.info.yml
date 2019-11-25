@@ -1,0 +1,4 @@
+name: Pjatk Form
+description: Login form authenticating via Pjatk services
+type: module
+core: 8.x
