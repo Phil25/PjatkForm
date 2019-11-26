@@ -47,6 +47,11 @@ function createUser($number, $client) {
 	return $user;
 }
 
+function loadUser($number) {
+	$users = \Drupal::entityTypeManager()->getStorage('user')->loadByProperties(['name'=> $number]);
+	return reset($users);
+}
+
 class PjatkForm extends FormBase {
 
 	/**
@@ -91,7 +96,7 @@ class PjatkForm extends FormBase {
 			return;
 		}
 
-		$user = User::load($number);
+		$user = loadUser($number);
 		if(!$user) $user = createUser($number, $client);
 
 		drupal_set_message(t('Logged in'));
