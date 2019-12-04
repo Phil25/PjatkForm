@@ -19,7 +19,7 @@ function randomString($length = 64) {
 	return $randomString;
 }
 
-function createUser($number, PJATKClient &$client) {
+function createUser(string $number, PJATKClient &$client) {
 	$user = User::create();
 
 	$user->setPassword(randomString());
@@ -40,8 +40,8 @@ function createUser($number, PJATKClient &$client) {
 	return $user;
 }
 
-function loadUser($number) {
-	$users = \Drupal::entityTypeManager()->getStorage('user')->loadByProperties(['name'=> $number]);
+function loadUser(string $name) {
+	$users = \Drupal::entityTypeManager()->getStorage('user')->loadByProperties(['name'=> $name]);
 	return reset($users);
 }
 
@@ -81,16 +81,29 @@ class PjatkForm extends FormBase {
 	 * {@inheritdoc}
 	 */
 	public function submitForm(array &$form, FormStateInterface $form_state) {
-		$number = $form_state->getValue('number');
-		$client = new PJATKClient($number, $form_state->getValue('password'));
+		$username = $form_state->getValue('number');
+		$password = $form_state->getValue('password');
+		$user = loadUser($username);
 
-		if(!$client->isLoggedIn()) {
+		if (\Drupal::service('user.auth')->authenticate($username, $password)) {
+
+			if (!$user) {
+				drupal_set_message(t('Authenticated on a non-existing user. This shouldn\'t have happened.'), 'error');
+				return;
+			}
+
+			drupal_set_message(t('Logged in as ' . $username));
+			user_login_finalize($user);
+			return;
+		}
+
+		$client = new PJATKClient($username, $password);
+		if (!$client->isLoggedIn()) {
 			drupal_set_message(t('Invalid student number or password.'), 'error');
 			return;
 		}
 
-		$user = loadUser($number);
-		if(!$user) $user = createUser($number, $client);
+		if (!$user) $user = createUser($username, $client);
 
 		drupal_set_message(t('Logged in'));
 		user_login_finalize($user);
