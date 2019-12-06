@@ -8,6 +8,7 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\PjatkForm\PJATKClient\PJATKClient;
 
 use Drupal\user\Entity\User;
+use Drupal\Core\Url;
 
 function randomString($length = 64) {
 	$characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -34,6 +35,7 @@ function createUser(string $number, PJATKClient &$client) {
 	$user->set('field_faculty', $client->getFaculty());
 	$user->set('field_semester', $client->getSemester());
 
+	$user->addRole('applicant');
 	$user->activate();
 	$user->save();
 
@@ -94,7 +96,8 @@ class PjatkForm extends FormBase {
 
 			drupal_set_message(t('Logged in as ' . $username));
 			user_login_finalize($user);
-			return;
+
+			return $form_state->setRedirectUrl(Url::fromUri('internal:/projects'));
 		}
 
 		$client = new PJATKClient($username, $password);
@@ -107,5 +110,7 @@ class PjatkForm extends FormBase {
 
 		drupal_set_message(t('Logged in'));
 		user_login_finalize($user);
+
+		return $form_state->setRedirectUrl(Url::fromUri('internal:/projects'));
 	}
 }
