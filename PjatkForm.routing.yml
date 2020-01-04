@@ -4,4 +4,4 @@ PjatkForm.PjatkForm:
     _form: '\Drupal\PjatkForm\Form\PjatkForm'
     _title: 'Log in'
   requirements:
-    _role: 'anonymous'
+    _role: 'anonymous+authorized'
